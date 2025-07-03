@@ -12,7 +12,7 @@ model.load_state_dict(torch.load("mnist_model_cnn.pth", map_location=torch.devic
 model.eval()
 
 # img = Image.open("saved_digits/001_0_.png").convert('L')  # Grayscale
-img = Image.open("image2.png").convert('L')  # Grayscale
+img = Image.open("image4.png").convert('L')  # Grayscale
 img = img.resize((28, 28))                  # Resize to MNIST format
 # Optional: Invert colors if background is dark
 # img = transforms.functional.invert(img)
