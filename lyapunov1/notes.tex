@@ -1,0 +1,130 @@
+\documentclass{article}
+\usepackage[utf8]{inputenc}
+\usepackage{amsmath,amsfonts}
+\usepackage{xcolor}
+\usepackage{graphicx}
+\usepackage{hyperref}
+
+% === Dark Mode ===
+\pagecolor{black}      % Background color
+\color{white}          % Text color
+\title{Lyapunov Stability in AI-Based Control}
+\date{}
+
+\begin{document}
+\maketitle
+
+\section*{Motivation}
+
+Neural networks (NNs) are powerful function approximators, but:
+
+\begin{itemize}
+  \item They do not inherently guarantee stability.
+  \item They are hard to interpret or certify.
+  \item In control systems, we require provable stability (often via Lyapunov functions).
+\end{itemize}
+
+\textbf{Question:} Can we train a neural network (e.g., controller or model) and still prove that the system is stable?
+
+\section*{Core Idea}
+
+We combine Lyapunov theory with AI by either:
+
+\begin{enumerate}
+  \item \textbf{Lyapunov-Constrained Learning}: Enforce that a Lyapunov function decreases along trajectories.
+  \item \textbf{Learning Lyapunov Functions}: Use a neural network to learn a valid Lyapunov function from data.
+\end{enumerate}
+
+\section*{1. Lyapunov-Constrained Learning}
+
+We require that a candidate Lyapunov function \( V(x) \) satisfies:
+
+\[
+\dot{V}(x) \leq -\alpha \|x\|^2
+\]
+
+This can be enforced via:
+
+\begin{itemize}
+  \item LMIs (Linear Matrix Inequalities)
+  \item Differentiable constraints or penalty terms
+  \item Safe reinforcement learning formulations
+\end{itemize}
+
+For a system of the form:
+
+\[
+\dot{x} = f(x) + g(x) u(x)
+\]
+
+and a neural network controller \( u(x; \theta) \), we define:
+
+\[
+\dot{V}(x) = \nabla V(x)^\top (f(x) + g(x) u(x))
+\]
+
+Then, we penalize violation of the Lyapunov condition during training:
+
+\[
+L = L_{\text{performance}} + \lambda \cdot \text{ReLU}\left( \dot{V}(x) + \alpha \|x\|^2 \right)
+\]
+
+\section*{2. Learning Lyapunov Functions}
+
+Alternatively, we train a neural network to represent \( V(x) \), ensuring it satisfies:
+
+\begin{align*}
+V(x) &> 0, \quad \forall x \neq 0 \\
+\dot{V}(x) &< 0, \quad \forall x \neq 0
+\end{align*}
+
+This can be done either as part of training a controller or post hoc to verify stability of a learned policy.
+
+\section*{Tools and Frameworks}
+
+\begin{itemize}
+  \item \textbf{CVXPYLayer} (PyTorch): Differentiable convex optimization layers.
+  \item \textbf{Lyapunov neural networks}: NN models trained to act as valid Lyapunov functions.
+  \item \textbf{Control Lyapunov Function (CLF)}: Traditional Lyapunov theory embedded in learning.
+  \item \textbf{Safe RL / Constrained Policy Optimization}: Incorporate stability conditions as constraints.
+\end{itemize}
+
+\section*{Example Workflow}
+
+Given a system:
+
+\[
+\dot{x} = f(x) + g(x) u(x)
+\]
+
+Train a neural network controller \( u(x; \theta) \) with the constraint:
+
+\[
+\dot{V}(x) = \nabla V(x)^\top (f(x) + g(x) u(x)) \leq -\alpha \|x\|^2
+\]
+
+This ensures asymptotic stability, provided \( V(x) \) is positive definite.
+
+\section*{Summary Table}
+
+\begin{tabular}{|l|l|}
+\hline
+\textbf{Goal} & \textbf{Method} \\
+\hline
+Stabilize NN controller & Lyapunov-constrained training \\
+Learn a Lyapunov function & Use neural network to approximate \( V(x) \) \\
+Certify a learned policy & Train/verify \( V(x) \) post hoc \\
+Reinforce stability during RL & Penalize \( \dot{V}(x) > 0 \) violations \\
+\hline
+\end{tabular}
+
+\section*{Suggested Readings}
+
+\begin{itemize}
+  \item \textit{Safe Control with Learned Control Barrier Functions}
+  \item \textit{Lyapunov Networks: Dynamically Stable Neural Network Models}
+  \item \textit{Constrained Policy Optimization (Achiam et al.)}
+  \item \textit{Stable Reinforcement Learning via Policy Gradient with Lyapunov Constraints}
+\end{itemize}
+
+\end{document}
