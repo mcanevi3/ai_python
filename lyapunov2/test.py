@@ -19,7 +19,7 @@ for i in range(1, samples):
     xi = torch.tensor([[x[i-1][0]]], dtype=torch.float32)  # shape (1,1)
     ui = Fs(xi).detach().numpy()[0][0]  # output is tensor -> numpy scalar
     u[i-1] = ui
-    x[i] = (1 - T) * x[i-1] + T * u[i-1]
+    x[i] = (1 +T*(2)) * x[i-1] + T * u[i-1]
 print(x[0])
 print(x[-1])
 

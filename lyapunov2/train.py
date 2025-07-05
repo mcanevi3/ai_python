@@ -11,11 +11,11 @@ alpha = 0.25
 #    model.net[0].weight.fill_(1)
 
 # Training data: sample x from range [-2, 2]
-x_train = torch.linspace(-1,1, 100).unsqueeze(1)
+x_train = torch.linspace(-1,1, 1000).unsqueeze(1)
 
 model.print()
 # === 4. Training loop ===
-for epoch in range(100+1):
+for epoch in range(1000+1):
     u = model(x_train)                    # controller output
     v_dot = dVdt(x_train, u)              # compute \dot{V}(x)
     lyapunov_penalty = torch.relu(v_dot + alpha * V(x_train))

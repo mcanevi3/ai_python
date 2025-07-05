@@ -9,6 +9,9 @@ class Controller(nn.Module):
             nn.ReLU(),
             nn.Linear(2, 1,bias=False)
         )
+        self.net = nn.Sequential(
+            nn.Linear(1, 1,bias=False)
+        )
 
     def forward(self, x):
         return self.net(x)
@@ -28,4 +31,4 @@ def V(x):  # Lyapunov function: x^2
     return x**2
 
 def dVdt(x, u):
-    return 2 * x * (-x + u)  # derivative of V(x) = x^2
+    return 2 * x * (2*x + u)  # derivative of V(x) = x^2
