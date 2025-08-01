@@ -16,9 +16,9 @@ C = torch.cat([Cs, torch.zeros((1, 1))], dim=1)
 Br=torch.tensor([[0.],
                  [0.],
                 [1.]])
-Q = torch.tensor([[0.001, 0.0, 0.0],
-                  [0.0, 0.001, 0.0],
-                  [0.0, 0.0, 0.001]])
+# Q = torch.tensor([[1.0, 0.0, 0.0],
+#                   [0.0, 1.0, 0.0],
+#                   [0.0, 0.0, 1.0]])
 
 class Controller(nn.Module):
     def __init__(self):
@@ -41,16 +41,17 @@ class Controller(nn.Module):
         self.net.load_state_dict(torch.load(filename))
         self.net.eval() 
 
-def V(x):  # Lyapunov function: x^2
-    # x: (N, 2), Q: (2, 2)
-    xQ = x @ Q
-    return (xQ * x).sum(dim=1, keepdim=True)
+def V(x,P):  # Lyapunov function: x^2
+    # x: (N, 2), P: (2, 2)
+    xP = x @ P
+    res=(xP * x).sum(dim=1, keepdim=True)
+    return res
 
-def dVdt(x, u):
+def dVdt(x, u,P):
     # x: (N, 2), u: (N, 1)
     x_dot = x @ A.T + u @ B.T         # shape: (N, 2)
-    xQ = x @ Q                        # shape: (N, 2)
-    vdot = 2 * (xQ * x_dot).sum(dim=1, keepdim=True)  # scalar per sample
+    xP = x @ P                       # shape: (N, 2)
+    vdot = 2 * (xP * x_dot).sum(dim=1, keepdim=True)  # scalar per sample
     return vdot
 
 def LQR_Controller():
@@ -60,9 +61,9 @@ def LQR_Controller():
     import numpy as np
     import control        
     
-    K, S, E = control.lqr(A, B, torch.tensor([[1.0, 0.0, 0.0],
+    K,P, E = control.lqr(A, B, torch.tensor([[1.0, 0.0, 0.0],
                   [0.0, 1.0, 0.0],
-                  [0.0, 0.0, 1.0]]), 10.0 * np.eye(1))  # LQR gain
+                  [0.0, 0.0, 100.0]]), 100.0 * np.eye(1))  # LQR gain
     K=-K
     Acl=(A+B*K).numpy()
     eigs=np.linalg.eigvals(Acl)
@@ -71,5 +72,5 @@ def LQR_Controller():
 
     # Define full 3D gain manually (e.g., from extended system)
     Ktorch = torch.tensor(K, dtype=torch.float32)  # shape (1,3)
-    
-    return Ktorch
+    Ptorch = torch.tensor(P, dtype=torch.float32)  # shape (3,3)
+    return Ktorch, Ptorch

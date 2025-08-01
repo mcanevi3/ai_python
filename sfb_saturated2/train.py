@@ -10,33 +10,11 @@ grid = torch.linspace(-1, 1, 11)
 x1, x2, x3 = torch.meshgrid(grid, grid, grid, indexing='ij')
 x_train = torch.stack([x1.flatten(), x2.flatten(), x3.flatten()], dim=1)
 
-Klqr ,Plqr= LQR_Controller()
-u = x_train @ Klqr.T
-v_dot = dVdt(x_train, u,Plqr)              # compute \dot{V}(x)
-lyapunov_penalty_raw = v_dot ;#+ alpha * V(x_train)
-lyapunov_penalty = torch.relu(lyapunov_penalty_raw)
+controller = Controller()
+optimizer = torch.optim.Adam(controller.parameters(), lr=1e-3, weight_decay=1e-5)
 
-violation_prob=torch.sigmoid(lyapunov_penalty)
-loss=violation_prob.mean()
-print(f"Loss: {loss.item():.6f}")
-cond=(lyapunov_penalty>0).squeeze()
-count=cond.sum().item()
-print(f"Violations: {count}")
-
-plt.figure(figsize=(10, 6))
-plt.plot(V(x_train,Plqr).numpy().flatten(),'k', label='V(x)')
-plt.plot(lyapunov_penalty_raw.numpy().flatten(),'b', label='Raw Lyapunov Penalty')
-plt.plot(lyapunov_penalty.numpy().flatten(),'r', label='Clipped Lyapunov Penalty')
-plt.show()
-
-# model = Controller()
-# optimizer = torch.optim.Adam(model.parameters(), lr=1e-3, weight_decay=1e-5)
-
-
-# model.print()
-# # === 4. Training loop ===
 # for epoch in range(1*100000+1):
-#     u = model(x_train)                    # controller output
+#     u = controller(x_train)                    # controller output
 #     v_dot = dVdt(x_train, u)              # compute \dot{V}(x)
 #     lyapunov_penalty = torch.relu(v_dot + alpha * V(x_train))
 
@@ -54,10 +32,10 @@ plt.show()
 #     if count==0:
 #         print(f"All violations cleared at epoch {epoch}")
 #         break
-# model.print()
-# model.save()
+# controller.print()
+# controller.save()
 
-# linear_layer = model.net[0]  # nn.Linear(2, 1, bias=False)
+# linear_layer = controller.net[0]  # nn.Linear(2, 1, bias=False)
 # weights = linear_layer.weight.data  # shape: (1, 2)
 # # Convert to numpy (optional)
 # K = weights.numpy().flatten()
