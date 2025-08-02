@@ -4,15 +4,27 @@ import torch
 
 from controller import *
 
-alpha = 0.0
-
 grid = torch.linspace(-1, 1, 11)
-x1, x2, x3 = torch.meshgrid(grid, grid, grid, indexing='ij')
-x_train = torch.stack([x1.flatten(), x2.flatten(), x3.flatten()], dim=1)
+x1, x2= torch.meshgrid(grid, grid, indexing='ij')
+x_train = torch.stack([x1.flatten(), x2.flatten()], dim=1)
 
 controller = Controller()
 optimizer = torch.optim.Adam(controller.parameters(), lr=1e-3, weight_decay=1e-5)
 
+nnP=LyapunovP()
+optimizerP = torch.optim.Adam(nnP.parameters(), lr=1e-3, weight_decay=1e-5)
+
+for epoch in range(1*1000+1):
+    
+    P = nnP()
+    Vx = V_learned(x_train, P)
+    u = controller(x_train)  # your neural controller
+    Vdot = dVdt_learned(x_train, u, A, B, P)
+    lyapunov_penalty = torch.relu(Vdot)
+
+    loss = lyapunov_penalty.mean()
+    loss.backward()
+    optimizer.step()
 # for epoch in range(1*100000+1):
 #     u = controller(x_train)                    # controller output
 #     v_dot = dVdt(x_train, u)              # compute \dot{V}(x)
