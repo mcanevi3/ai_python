@@ -10,7 +10,7 @@ class Controller(nn.Module):
     def __init__(self):
         super().__init__()
         self.net = nn.Sequential(
-            nn.Linear(3,1,bias=False),
+            nn.Linear(2,1,bias=False),
         )
         
     def forward(self, x):
@@ -28,7 +28,7 @@ class Controller(nn.Module):
         self.net.eval() 
 
 class LyapunovP(nn.Module):
-    def __init__(self, dim):
+    def __init__(self, dim=2):
         super().__init__()
         self.L_raw = nn.Parameter(torch.randn(dim, dim))
 
