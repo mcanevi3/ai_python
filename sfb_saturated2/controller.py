@@ -27,19 +27,6 @@ class Controller(nn.Module):
         self.net.load_state_dict(torch.load(filename))
         self.net.eval() 
 
-class LyapunovP(nn.Module):
-    def __init__(self, dim=2):
-        super().__init__()
-        self.L_raw = nn.Parameter(torch.randn(dim, dim))
-
-    def forward(self):
-        # Force lower triangular structure
-        L = torch.tril(self.L_raw)
-        # Exponentiate diagonals to ensure positive definiteness
-        diag_idx = torch.arange(L.shape[0])
-        L[diag_idx, diag_idx] = torch.exp(L[diag_idx, diag_idx])
-        return L @ L.T  # P = L L^T
-        
 def V(x,P):  # Lyapunov function: x^2
     # x: (N, 2), P: (2, 2)
     xP = x @ P
