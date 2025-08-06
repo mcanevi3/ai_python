@@ -44,8 +44,8 @@ def load_controller(filename):
 
 # simulate
 def sim():
-    NSIM= 100
-    t= torch.linspace(0, 10, NSIM, dtype=torch.float32)
+    t= torch.arange(0, 20, 1e-3, dtype=torch.float32)
+    NSIM= t.shape[0]
     x= torch.zeros((nF, NSIM), dtype=torch.float32)
     u=torch.zeros((1, NSIM), dtype=torch.float32)  # Reference input
     y=torch.zeros((1, NSIM), dtype=torch.float32)  # Reference input
@@ -55,6 +55,7 @@ def sim():
         u[:, i-1] = Fs(x[:, i-1])
         x[:, i] = x[:, i-1] + (A @ x[:, i-1] + B @ u[:, i-1] + Br @ r[:, i-1]) * (t[i] - t[i-1])
         y[:, i] = C @ x[:, i]
+    plt.figure(num=1, figsize=(10, 5))
     plt.plot(t.detach().numpy(), r.squeeze().detach().numpy(),'k', label='r')
     plt.plot(t.detach().numpy(), y.squeeze().detach().numpy(),'b', label='y')
     plt.xlabel('Time')
@@ -63,7 +64,6 @@ def sim():
     plt.legend()
     plt.grid()
     plt.tight_layout()
-    plt.show()
 # UTIL FUNCTIONS
 def get_lqr_P(A, Q):
     P = scipy.linalg.solve_continuous_lyapunov(A.numpy().T, -Q.numpy())
@@ -77,20 +77,37 @@ def make_symmetric_P(pvec):
         for j in range(i+1):
             L[i, j] = pvec[idx]
             idx += 1
-    P = L @ L.T
+    P = L @ L.T 
     return P
 
 def train():
     # GA FUNCTIONS
-    POP_SIZE = 30
-    N_GEN = 100
-    MUTATION_RATE = 0.2
-    MUTATION_SCALE = 0.1
+    POP_SIZE = 1500
+    N_GEN = 150
+    MUTATION_RATE = 0.4
+    MUTATION_SCALE = 0.2
     # Data
-    grid = torch.linspace(-1, 1, 20, dtype=torch.float32)
+    grid = torch.linspace(-1, 1, 14, dtype=torch.float32)
     x1, x2, x3= torch.meshgrid(grid, grid,grid, indexing='ij')
     x_train = torch.stack([x1.flatten(), x2.flatten(), x3.flatten()], dim=1).T
     def cost(xvec):
+        pvec= xvec[:nP]
+        fvec= xvec[nP:]
+        set_controller(fvec)
+        P = make_symmetric_P(pvec)
+        V = (x_train.T @ (P) @ x_train).diagonal()
+        V_res=torch.relu(-V)
+        V_count = (V_res > 0).sum().item()
+
+        u = Fs(x_train.T).T
+        xdot_train = A @ x_train + B @ u 
+        Vdot = (xdot_train.T @ P @ x_train + x_train.T @ P @ xdot_train).diagonal()
+        Vdot_res=torch.relu(Vdot+0.1*V)
+        Vdot_count = (Vdot_res > 0).sum().item()
+
+        return V_count + Vdot_count
+    
+    def plot_cost(xvec):
         pvec= xvec[:nP]
         fvec= xvec[nP:]
         set_controller(fvec)
@@ -100,17 +117,31 @@ def train():
         V_count = (V_res > 0).sum().item()
 
         u = Fs(x_train.T).T
-        xdot_train = A @ x_train + B @ u
-
+        xdot_train = A @ x_train + B @ u 
         Vdot = (xdot_train.T @ P @ x_train + x_train.T @ P @ xdot_train).diagonal()
         Vdot_res=torch.relu(Vdot)
         Vdot_count = (Vdot_res > 0).sum().item()
 
-        return V_count + Vdot_count
+        plt.figure(num=2,figsize=(10, 5))
+        plt.subplot(1, 2, 1)
+        plt.plot(V.detach().numpy(), 'r.', label='V')
+        plt.title(f'V: {V_count} violations')
+        plt.xlabel('Sample')
+        plt.ylabel('V')
+        plt.grid()
+        plt.legend()
+        plt.subplot(1, 2, 2)
+        plt.plot(Vdot.detach().numpy(), 'b.', label='Vdot')
+        plt.title(f'Vdot: {Vdot_count} violations')
+        plt.xlabel('Sample')
+        plt.ylabel('Vdot')
+        plt.grid()
+        plt.legend()
+        plt.tight_layout()
 
-
+    
     # Algorithm
-    pop = np.random.uniform(low=-2, high=2, size=(POP_SIZE, nP+nF))
+    pop = np.random.uniform(low=-10, high=10, size=(POP_SIZE, nP+nF))
     best_idx= None
     best_p = None
     best_count = float('inf')
@@ -119,9 +150,10 @@ def train():
         best_idx = np.argmin(fitness)
         best_p = pop[best_idx]
         best_count = fitness[best_idx]
-        print(f"Gen {gen:3d} | Best violations: {best_count}")
+        print(f"Gen {gen:3d} | Best violations: {best_count}/{x_train.shape[1]}")
 
         if best_count == 0:
+            
             break
 
         # Selection: Top 20% keep
@@ -155,13 +187,66 @@ def train():
     print(f"Eigenvalues of P: {eigs(P)}")
     K=get_controller()
     Acl= A + B @ K
-    print(f"Eigenvalues of A^T P + P A: {eigs((Acl).T @ P + P @ (Acl))}")
-    print_controller()
-    save_controller(fileName)
+    eigvals, eigvecs = np.linalg.eig((Acl.T @ P + P @ Acl).numpy())
+    print(f"Eigenvalues of A^T P + P A: {eigvals}")
+    temp=torch.relu(torch.tensor(eigvals)).sum().item()  
+    if temp > 1e-6:
+        print("Eigenvalues of A^T P + P A are not all negative, indicating a contradiction.")
+        xbad = find_contradictory_point(A, B, K, P)
+        
+        V = xbad @ P @ xbad
+        V_res=torch.relu(-V)
+        V_count = (V_res > 0).sum().item()
 
-if exists(fileName):
-    load_controller(fileName)
-    print_controller()
-else:
+        u = Fs(xbad)
+        xdotbad = A @ xbad + B @ u 
+        Vdot = xdotbad @ P @ xbad + xbad @ P @ xdotbad
+        Vdot_res=torch.relu(Vdot+0.1*V)
+        Vdot_count = (Vdot_res > 0).sum().item()
+
+        print(f"V_count: {V_count}, Vdot_count: {Vdot_count}")
+        print(f"Bad cost: {V_count + Vdot_count}")
+    else:
+        print_controller()
+        save_controller(fileName)
+
+        plot_cost(best_p)
+
+def find_contradictory_point(A, B, K, P):
+    Acl = A + B @ K
+    Q = Acl.T @ P + P @ Acl
+
+    # Eigen-decomposition
+    eigvals, eigvecs = np.linalg.eigh(Q)  # use eigh since Q is symmetric
+
+    # Find any eigenvector corresponding to a positive eigenvalue
+    for val, vec in zip(eigvals, eigvecs.T):
+        if val > 1e-6:  # small threshold to avoid numerical noise
+            x = vec / np.linalg.norm(vec)  # normalize
+            V = x @ P @ x
+            Vdot = x @ Q @ x
+            print(f"Found contradictory point x = {x}")
+            print(f"V(x) = {V:.4f}, Vdot(x) = {Vdot:.4f}")
+            return x
+
+    print("No contradictory point found — Q may be negative semi-definite.")
+    return None
+
+COND= True  
+if COND:
     train()
+else:
+    if exists(fileName):
+        load_controller(fileName)
+        print_controller()
+
+        # P=torch.tensor([[15.481152, 7.977515, 18.734655],
+        #                 [ 7.977515, 46.479527,  7.2124352],
+        #                 [18.734655,  7.2124352, 22.83376]], dtype=torch.float32)
+        # K=torch.tensor([[1.5247, -8.2852, -1.8256]], dtype=torch.float32)
+        # xbad=find_contradictory_point(A, B, K, P)
+    else:
+        train()
 sim()
+plt.show()
+
