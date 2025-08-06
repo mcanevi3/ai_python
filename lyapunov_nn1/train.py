@@ -22,10 +22,11 @@ for epoch in range(10*10000+1):
     Vx = lyap.get_V(x_train)
     Vdot = lyap.get_Vdot(xdot_train,x_train)
     Vdot2 = Vdot + 0.1*torch.eye(Vdot.shape[0], device=Vdot.device)
+    Vdot2 = Vdot + 0.1*Vx
 
-    lyapunov_penalty = torch.relu(Vdot2) 
     lyapunov_penalty = torch.nn.functional.softplus(Vdot2)
     lyapunov_penalty = torch.log(1 + torch.exp(Vdot2))
+    lyapunov_penalty = torch.relu(Vdot2) 
 
     loss = lyapunov_penalty.mean()
     loss.backward()
@@ -33,11 +34,15 @@ for epoch in range(10*10000+1):
 
     cond=(lyapunov_penalty>0).squeeze()
     count=cond.sum().item()
+    
     if epoch % 500 == 0:
         print(f"Epoch {epoch:3d} | Loss: {loss.item():.6f} Violations:{count}")
     if count==0:
         print(f"All violations cleared at epoch {epoch}")
         break
+    
+    if count > 0:
+        continue
 
 ## Save the controller and print the results
 optimizer.zero_grad()
