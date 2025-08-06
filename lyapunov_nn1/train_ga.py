@@ -6,14 +6,13 @@ def make_symmetric_P(p_vec):
                       [p_vec[1], p_vec[2]]], dtype=torch.float32)
     return P
 
-def count_violations(p_vec, x_train, xdot_train):
+def count_violations(p_vec, x, xdot):
     P = make_symmetric_P(p_vec)
-    x = x_train.T  # shape (2, N)
-    xdot = xdot_train.T
-
-    Vdot = (xdot.T @ P @ x).diagonal()
-    count = (Vdot > 0).sum().item()
-    return count
+    V = (x @ P @ x.T).diagonal()
+    countV= (V <= 0).sum().item()
+    Vdot = (xdot @ P @ x.T).diagonal()+(x @ P @ xdot.T).diagonal()
+    countVdot = (Vdot >= 0).sum().item()
+    return countV+countVdot
 
 POP_SIZE = 100
 N_GEN = 200
@@ -44,11 +43,18 @@ for gen in range(N_GEN):
     print(f"Gen {gen:3d} | Best violations: {best_count}")
 
     if best_count == 0:
+        print("Found perfect Lyapunov candidate.")
         P = make_symmetric_P(best_p)
         eigvals = np.linalg.eigvals(P.numpy())
         print(f"Best P:\n{P.numpy()}")
         print(f"Eigenvalues of P: {eigvals}")
-        print("✅ Found perfect Lyapunov candidate.")
+
+        Vdot = (xdot_train @ P @ x_train.T).diagonal() + (x_train @ P @ xdot_train.T).diagonal()
+        count = (Vdot > 0).sum().item()
+        print(f"Vdot violations: {count}")
+
+        temp=A.T @ P+P @ A
+        print(f"Eig:\n{np.linalg.eigvals(temp.numpy())}")
         break
 
     # Selection: Top 20% keep
