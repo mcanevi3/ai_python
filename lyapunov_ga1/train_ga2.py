@@ -10,9 +10,15 @@ import numpy as np
 import scipy.linalg
 import matplotlib.pyplot as plt
 
-Ap=torch.tensor([[1., 2.],[-3., -4.]], dtype=torch.float32)
-Bp=torch.tensor([[0.],[1.]], dtype=torch.float32)
-Cp=torch.tensor([[1., 0.]], dtype=torch.float32)
+
+if False:
+    Ap=torch.tensor([[1., 2.],[-3., -4.]], dtype=torch.float32)
+    Bp=torch.tensor([[0.],[1.]], dtype=torch.float32)
+    Cp=torch.tensor([[1., 0.]], dtype=torch.float32)
+else:
+    Ap=torch.tensor([[1]], dtype=torch.float32)
+    Bp=torch.tensor([[1]], dtype=torch.float32)
+    Cp=torch.tensor([[1]], dtype=torch.float32)
 
 A =  torch.cat([
         torch.cat([Ap, torch.zeros((Ap.shape[0], 1))], dim=1),
@@ -22,9 +28,10 @@ B = torch.cat([Bp, torch.zeros((1, 1))], dim=0)
 C = torch.cat([Cp, torch.zeros((1, 1))], dim=1)
 Br = torch.cat([torch.zeros((Ap.shape[0], 1)), torch.ones((1, 1))], dim=0)
 
-n = 3
+n = A.shape[0]  # Number of states
 nP=n*(n+1)//2  # Number of unique elements in symmetric P
 nF=n
+
 # Controller
 fileName = "best_controller.pth"
 Fs=nn.Sequential(nn.Linear(nF,1,bias=False))
@@ -80,6 +87,19 @@ def make_symmetric_P(pvec):
     P = L @ L.T 
     return P
 
+def cartesian_data():
+    grid = torch.linspace(-1, 1, 14, dtype=torch.float32)
+    x1, x2= torch.meshgrid(grid, grid, indexing='ij')
+    x_train = torch.stack([x1.flatten(), x2.flatten()], dim=1).T
+    return x_train
+def polar_data():
+    theta = torch.linspace(-2*torch.pi, 2*torch.pi, 36, dtype=torch.float32)
+    r=torch.linspace(0, 1, 10, dtype=torch.float32)
+    theta, r = torch.meshgrid(theta, r, indexing='ij')
+    theta = theta.flatten()
+    r = r.flatten()
+    x_train = torch.stack([r * torch.cos(theta), r * torch.sin(theta)], dim=0)  # shape (2, 100)
+    return x_train
 def train():
     # GA FUNCTIONS
     POP_SIZE = 1500
@@ -87,9 +107,7 @@ def train():
     MUTATION_RATE = 0.4
     MUTATION_SCALE = 0.2
     # Data
-    grid = torch.linspace(-1, 1, 14, dtype=torch.float32)
-    x1, x2, x3= torch.meshgrid(grid, grid,grid, indexing='ij')
-    x_train = torch.stack([x1.flatten(), x2.flatten(), x3.flatten()], dim=1).T
+    x_train = polar_data()
     def cost(xvec):
         pvec= xvec[:nP]
         fvec= xvec[nP:]
@@ -179,8 +197,8 @@ def train():
     print("*******************************")
     print(f"Best candidate: {best_p}")
     print(f"Best count: {best_count}")
-    pvec= best_p[:6]
-    fvec= best_p[6:]
+    pvec= best_p[:nP]
+    fvec= best_p[nP:]
     set_controller(fvec)
     P = make_symmetric_P(pvec)
     print(f"Best P:\n{P.numpy()}")
