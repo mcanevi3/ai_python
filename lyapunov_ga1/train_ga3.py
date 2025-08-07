@@ -2,6 +2,7 @@
 Genetic Algorithm for Lyapunov Function Training
 Test known P, A^T P + P A using u=Kx and NN
 with using GA to find P
+P is generated directly from a vector instead of Cholesky decomposition
 """
 from os.path import exists
 import torch
@@ -78,13 +79,11 @@ def get_lqr_P(A, Q):
 def eigs(P):
     return np.linalg.eigvals(P.numpy())
 def make_symmetric_P(pvec):
-    L = torch.zeros((nF, nF), dtype=torch.float32)
-    idx = 0
-    for i in range(nF):
-        for j in range(i+1):
-            L[i, j] = pvec[idx]
-            idx += 1
-    P = L @ L.T 
+    # P=torch.tensor([[pvec[0], pvec[1]],
+    #                  [pvec[1], pvec[2]]], dtype=torch.float32)
+    P=torch.tensor([[pvec[0], pvec[1], pvec[2]],
+                     [pvec[1], pvec[3], pvec[4]],
+                     [pvec[2], pvec[4], pvec[5]]], dtype=torch.float32)
     return P
 
 def cartesian_data():
