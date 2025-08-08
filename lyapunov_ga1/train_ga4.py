@@ -30,11 +30,9 @@ nP=n*(n+1)//2  # Number of unique elements in symmetric P
 # Controller
 fileName = "best_controller.pth"
 Fs = nn.Sequential(
-    nn.Linear(n, 2, bias=False),
-    nn.ReLU(),
-    nn.Linear(2, 2, bias=False),
-    nn.ReLU(),
-    nn.Linear(2, 1, bias=False)
+    nn.Linear(n, 5, bias=True),
+    nn.Linear(5, 5, bias=True),
+    nn.Linear(5, 1, bias=False)
 )
 def get_controller():
     with torch.no_grad():
@@ -80,15 +78,16 @@ def sim():
     x= torch.zeros((n, NSIM), dtype=torch.float32)
     u=torch.zeros((1, NSIM), dtype=torch.float32)  # Reference input
     y=torch.zeros((1, NSIM), dtype=torch.float32)  # Reference input
-    r=torch.ones((1, NSIM), dtype=torch.float32)  # Reference input
-    # x[:, 0] = torch.tensor([1., 1.], dtype=torch.float32)
+    r=torch.sin(2*torch.pi*t).reshape(1, -1)
+    # x[:, 0] = torch.tensor([1., 1.,0.], dtype=torch.float32)
     for i in range(1, NSIM):
         u[:, i-1] = Fs(x[:, i-1])
-        x[:, i] = x[:, i-1] + (A @ x[:, i-1] + B @ u[:, i-1] + Br @ r[:, i-1]) * (t[i] - t[i-1])
+        x[:, i] = x[:, i-1] + (A @ x[:, i-1] + B @ u[:, i-1] + Br @ r[:,i-1]) * (t[i] - t[i-1])
         y[:, i] = C @ x[:, i]
     plt.figure(num=1, figsize=(10, 5))
     plt.plot(t.detach().numpy(), r.squeeze().detach().numpy(),'k', label='r')
     plt.plot(t.detach().numpy(), y.squeeze().detach().numpy(),'b', label='y')
+    plt.plot(t.detach().numpy(), u.squeeze().detach().numpy(),'m', label='u')
     plt.xlabel('Time')
     plt.ylabel('State')
     plt.title('System Response')
@@ -223,46 +222,11 @@ def train():
     save_controller(fileName)
     plot_cost(best_p)
 
-# train()
+#train()
 load_controller(fileName)
-# sim()
-# plt.show()
-print_controller()
-print(Fs(torch.tensor([0,0,1], dtype=torch.float32)))
-# def find_contradictory_point(A, B, K, P):
-#     Acl = A + B @ K
-#     Q = Acl.T @ P + P @ Acl
+sim()
+plt.show()
 
-#     # Eigen-decomposition
-#     eigvals, eigvecs = np.linalg.eigh(Q)  # use eigh since Q is symmetric
 
-#     # Find any eigenvector corresponding to a positive eigenvalue
-#     for val, vec in zip(eigvals, eigvecs.T):
-#         if val > 1e-6:  # small threshold to avoid numerical noise
-#             x = vec / np.linalg.norm(vec)  # normalize
-#             V = x @ P @ x
-#             Vdot = x @ Q @ x
-#             print(f"Found contradictory point x = {x}")
-#             print(f"V(x) = {V:.4f}, Vdot(x) = {Vdot:.4f}")
-#             return x
-
-#     print("No contradictory point found — Q may be negative semi-definite.")
-#     return None
-
-# COND= True  
-# if COND:
-#     train()
-# else:
-#     if exists(fileName):
-#         load_controller(fileName)
-#         print_controller()
-
-#         # P=torch.tensor([[15.481152, 7.977515, 18.734655],
-#         #                 [ 7.977515, 46.479527,  7.2124352],
-#         #                 [18.734655,  7.2124352, 22.83376]], dtype=torch.float32)
-#         # K=torch.tensor([[1.5247, -8.2852, -1.8256]], dtype=torch.float32)
-#         # xbad=find_contradictory_point(A, B, K, P)
-#     else:
-#         train()
 
 
