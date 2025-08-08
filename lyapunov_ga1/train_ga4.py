@@ -94,6 +94,7 @@ def sim():
     plt.legend()
     plt.grid()
     plt.tight_layout()
+    plt.show()
 # UTIL FUNCTIONS
 def get_lqr_P(A, Q):
     P = scipy.linalg.solve_continuous_lyapunov(A.numpy().T, -Q.numpy())
@@ -222,10 +223,11 @@ def train():
     save_controller(fileName)
     plot_cost(best_p)
 
-#train()
-load_controller(fileName)
-sim()
-plt.show()
+if __name__=="__main__":
+    train()
+    # load_controller(fileName)
+    # print_controller()
+    sim()
 
 
 
