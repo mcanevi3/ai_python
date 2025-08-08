@@ -30,9 +30,9 @@ nP=n*(n+1)//2  # Number of unique elements in symmetric P
 # Controller
 fileName = "best_controller.pth"
 Fs = nn.Sequential(
-    nn.Linear(n, 5, bias=True),
-    nn.Linear(5, 5, bias=True),
-    nn.Linear(5, 1, bias=False)
+    nn.Linear(n, 3, bias=True),
+    nn.Linear(3, 3, bias=True),
+    nn.Linear(3, 1, bias=False)
 )
 def get_controller():
     with torch.no_grad():
