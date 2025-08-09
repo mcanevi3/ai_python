@@ -1,7 +1,10 @@
 import torch
 
 # print(torch.cuda.get_device_name(0) if torch.cuda.is_available() else "No GPU")
-device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+if False:
+    device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+else:
+    device=torch.device("cpu")
 
 print(f"Using:{device}")
 

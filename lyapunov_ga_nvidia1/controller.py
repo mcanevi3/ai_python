@@ -43,10 +43,10 @@ class Controller(nn.Module):
                     print(f"Layer {i} - ({layer.in_features}x{layer.out_features})")
 
                 print("  Weights:")
-                print(layer.weight.data.detach().numpy())
+                print(layer.weight.data.cpu().detach().numpy())
                 if layer.bias is not None:
                     print("  Biases:")
-                    print(layer.bias.data.detach().numpy())
+                    print(layer.bias.data.cpu().detach().numpy())
             else:
                 print(f"Layer {i} - {layer.__class__.__name__}")
     
@@ -54,7 +54,7 @@ class Controller(nn.Module):
         torch.save(self.Fs.state_dict(), filename)
     
     def load_controller(self,filename):
-        self.Fs.load_state_dict(torch.load(filename))
+        self.Fs.load_state_dict(torch.load(filename,weights_only=True))
         self.Fs.eval()
 
 if __name__=="__main__":

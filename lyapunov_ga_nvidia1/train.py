@@ -17,7 +17,7 @@ Fs=Controller()
 fileName="controller.pth"
 
 # Data
-grid = torch.linspace(-1, 1, 14, dtype=torch.float32,device=device)
+grid = torch.linspace(-1, 1, 20, dtype=torch.float32,device=device)
 x1, x2,x3 = torch.meshgrid(grid, grid,grid, indexing='ij')
 x_train = torch.stack([x1.flatten(), x2.flatten(), x3.flatten()], dim=1).T
 
@@ -31,7 +31,7 @@ def cost(xvec):
     V_count = (V_res > 0).sum().item()
 
     u = Fs(x_train.T).T
-    xdot_train = A @ x_train #+ B @ u 
+    xdot_train = A @ x_train + B @ u 
     Vdot = (xdot_train.T @ P @ x_train + x_train.T @ P @ xdot_train).diagonal()
     Vdot_res=torch.relu(Vdot+0.1*V)
     Vdot_count = (Vdot_res > 0).sum().item()
@@ -39,7 +39,7 @@ def cost(xvec):
     return Vdot_count
 
 
-pop = (torch.rand((POP_SIZE, nP + Fs.controller_param_count()), device=device) * 20) - 10
+pop = (torch.rand((POP_SIZE, nP + Fs.controller_param_count()), device=device) * 500) - 250
 
 best_idx = None
 best_p = None
