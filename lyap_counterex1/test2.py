@@ -5,13 +5,22 @@ Write a gradient-ascend algorithm to maximize the delta V for a grid used for Ly
 from matplotlib import pyplot as plt
 import torch 
 
+from util import *
+
 A=torch.tensor([[1.0,2.0],[-3.0,-4.0]])
 
-grid = torch.linspace(-2.0, 2.0, 30)
+grid = torch.linspace(-2.0, 2.0, 5)
 x1, x2= torch.meshgrid(grid, grid, indexing='ij')
 x_train = torch.stack([x1.flatten(), x2.flatten()], dim=1).T
 
-P=torch.eye(2,2)
+Plqr=get_lqr_P(A,torch.eye(2))
+I=torch.eye(2,2)
+L=torch.randn(2,2)
+
+Q=L@L.T
+Pr=get_lqr_P(A,Q)
+P=Pr
+
 V=(x_train.T@P@x_train).diagonal()
 xdot_train=A@x_train
 gradxdot_train=A
@@ -21,9 +30,11 @@ Vdot_count=Vdot_res.sum().item()
 
 lmi1=A.T@P+P@A
 eigVal,eigVec=torch.linalg.eig(lmi1)
+
+eigsP,_=torch.linalg.eig(P)
+print(f"Eigs of P:{eigsP.tolist()}")
 print(f"Eigs of A^TP+PA:{eigVal.tolist()}")
 
-print(f"Vdot:{Vdot_res.tolist()}")
 costvec=torch.zeros((30+1,))
 costvec[0]=Vdot_count
 costindex=torch.zeros_like(costvec)
@@ -46,7 +57,8 @@ for i in range(1,costvec.shape[0]):
     costvec[i]=Vdot2_count
     costindex[i]=i
 
-plt.figure()
-plt.plot(costindex,costvec,'b')
-plt.show()
+print(f"Cost:{costvec[-1].item()}")
+# plt.figure()
+# plt.plot(costindex,costvec,'b')
+# plt.show()
 
