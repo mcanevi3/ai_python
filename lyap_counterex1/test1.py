@@ -10,6 +10,8 @@ n=A.shape[0]
 nP=n*(n+1)//2
 
 pvec=torch.tensor([164.3077, -153.4470,   -0.6598,  -16.6760,   -1.2490,   -1.1480])
+pvec=torch.tensor([-206.4720,  166.1432,  -13.1968,   38.2916,  -15.1836,   37.3204])
+pvec=torch.tensor([-206.5327,  132.3334,  -74.7703,   36.9112,  -39.7628,   21.9226])
 P=make_symmetric_P(pvec,3)
 
 grid = torch.linspace(-1, 1, 10, dtype=torch.float32)

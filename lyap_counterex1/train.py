@@ -13,22 +13,41 @@ MUTATION_RATE = 0.4
 MUTATION_SCALE = 0.2
 
 # Data
-grid = torch.linspace(-1, 1, 10, dtype=torch.float32)
+grid = torch.linspace(-1, 1, 4, dtype=torch.float32)
 x1, x2, x3= torch.meshgrid(grid, grid, grid, indexing='ij')
 x_train = torch.stack([x1.flatten(), x2.flatten(),x3.flatten()], dim=1).T
 def cost(xvec):
     pvec= xvec[:nP]
     P = make_symmetric_P(pvec,3)
-    V = (x_train.T @ P @ x_train).diagonal()
-    V_res=torch.relu(-V)
-    V_count = (V_res > 0).sum().item()
+    
+    
+    gradxdot_train=A
+    x_train2=x_train
+    for i in range(100):
+        xdot_train2=A@x_train2
+        gradVdot=2*(gradxdot_train.T@P@x_train2+P@xdot_train2)
 
-    xdot_train = A @ x_train 
-    Vdot = (xdot_train.T @ P @ x_train + x_train.T @ P @ xdot_train).diagonal()
-    Vdot_res=torch.relu(Vdot+0.1*V)
-    Vdot_count = (Vdot_res > 0).sum().item()
+        V2=(x_train2.T@P@x_train2).diagonal()
+        Vdot2=(xdot_train2.T@P@x_train2+x_train2.T@P@xdot_train2).diagonal()
+        Vdot2_res=torch.relu(Vdot2)
+        Vdot2_sign=torch.sign(Vdot2_res)
+        Vdot2_count=Vdot2_res.sum().item()
+        
+        #  zeros after ReLU, try the boundary
+        x_train2=x_train2-0.001*gradVdot*(1-Vdot2_sign)
+        # minimize already positive after ReLU, try the boundary
+        x_train2=x_train2+0.001*gradVdot*(Vdot2_sign)
 
-    return Vdot_count
+        x_train2=torch.clamp(x_train2,-1e2,1e2)
+
+        cost=Vdot2_count
+    # V_res=torch.relu(-V)
+    # V_count = (V_res > 0).sum().item()
+
+    # Vdot = (xdot_train.T @ P @ x_train + x_train.T @ P @ xdot_train).diagonal()
+    # Vdot_res=torch.relu(Vdot+0.1*V)
+    # Vdot_count = (Vdot_res > 0).sum().item()
+    return cost
 
 
 pop = (torch.rand((POP_SIZE, nP)) * 500) - 250
