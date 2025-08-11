@@ -1,23 +1,27 @@
-import numpy as np
+import torch
 import matplotlib.pyplot as plt
 
 def f(x):
-    return 2-x**2
+    return (x+2)**2
 def grad_f(x):
-    return -2*x
+    return 2*(x+2)
 
-xi=1
-print(f"i:0 xi:{xi}")
-xvec=[xi]
-fvec=[f(xi)]
-plt.plot(xvec,fvec,'kx')
-for i in range(30):
-    xi=xi+0.1*grad_f(xi)
+COLORS=[(1.0,0.0,0.0),(0.0,1.0,0.0),(0.0,0.0,1.0)]
+STEPS=3
+x0=torch.tensor([-1,0.1,1])
 
-    xvec.append(xi)
-    fvec.append(f(xi))
+N=len(x0)
+xvec=torch.zeros((N,STEPS))
+xvec[:,0]=x0
+for i in range(1,STEPS):
+    xvec[:,i]=xvec[:,i-1]+0.1*grad_f(xvec[:,i-1])
 
-plt.plot(xvec,fvec)
-plt.plot(xvec[-1],fvec[-1],'ko')
+tempX=torch.linspace(-10.0,10.0,100)
+tempY=f(tempX)
+plt.plot(tempX,tempY,'k')
+for i in range(xvec.shape[0]):
+    plt.plot(xvec[i,:],f(xvec[i,:]),color=COLORS[i])
+
 plt.grid()
 plt.show()
+
