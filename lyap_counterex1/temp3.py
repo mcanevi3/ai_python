@@ -34,8 +34,8 @@ for i in range(SAMPLES):
     vdotvec[i,0]=Vdot(xvec[i,:,0],P)
 
 for k in range(SAMPLES):
-    for i in range(STEPS):
-        step=0.01*grad_Vdot(xvec[k,:,0],P)
+    for i in range(1,STEPS):
+        step=0.01*grad_Vdot(xvec[k,:,i-1],P)
         xvec[k,:,i]=xvec[k,:,i-1]+step
         vdotvec[k,i]=Vdot(xvec[k,:,i],P)
 
