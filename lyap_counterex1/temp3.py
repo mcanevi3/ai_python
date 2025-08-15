@@ -20,7 +20,7 @@ def grad_Vdot(x,P):
     return (grad_xdot.T@P@x_col+P@xdot).squeeze()
 
 P=torch.diag(torch.tensor([1.0,1.0]))
-Q=torch.diag(torch.tensor([-1.0,-1.0]))
+Q=torch.diag(torch.tensor([-1.0,1.0]))
 P=torch.tensor(scipy.linalg.solve_continuous_lyapunov(A.numpy().T, Q.numpy()))
 
 lmi1=A.T@P+P@A
@@ -48,11 +48,15 @@ for k in range(SAMPLES):
         step=0.01*grad_Vdot(xvec[k,:,i-1],P)
         xvec[k,:,i]=xvec[k,:,i-1]+step
         vdotvec[k,i]=Vdot(xvec[k,:,i],P)
+        if k==0:
+            cost=torch.relu(vdotvec[k,i]).sum().item()
+            print(f"Cost[{i}]:{cost}")
 
 for k in range(SAMPLES): #SAMPLES
     plt.plot(xvec[k,0,0],vdotvec[k,0],'kx')
     plt.plot(xvec[k,0,:],vdotvec[k,:])
     plt.plot(xvec[k,0,-1],vdotvec[k,-1],'ko')
 
+    
 plt.grid()
 plt.show()
