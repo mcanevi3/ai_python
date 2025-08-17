@@ -1,10 +1,9 @@
 import torch
 
 from util import *
+from lyap import *
+from defs import *
 
-A=torch.tensor([[1.0,2.0,3.0],[2.0,2.0,2.4],[-3.0,-4.0,7.0]])
-n=A.shape[0]
-nP=n*(n+1)//2
 
 # GA FUNCTIONS
 POP_SIZE = 1500
@@ -16,17 +15,10 @@ MUTATION_SCALE = 0.2
 grid = torch.linspace(-1, 1, 4, dtype=torch.float32)
 x1, x2, x3= torch.meshgrid(grid, grid, grid, indexing='ij')
 x_train = torch.stack([x1.flatten(), x2.flatten(),x3.flatten()], dim=1).T
-def cost(xvec):
+def ga_cost(xvec):
     pvec= xvec[:nP]
     P = make_symmetric_P(pvec,3)
-    xdot_train2=A@x_train
-    Vdot2=(xdot_train2.T@P@x_train+x_train.T@P@xdot_train2).diagonal()
-    Vdot2_res=torch.relu(Vdot2)
-    Vdot2_count=Vdot2_res.sum().item()
-    
-    cost=Vdot2_count
-    return cost
-
+    return lyap_cost(x_train,A,P)
 
 pop = (torch.rand((POP_SIZE, nP)) * 500) - 250
 
@@ -36,7 +28,7 @@ best_count = float("inf")
 
 for gen in range(N_GEN):
     # Evaluate fitness
-    fitness = torch.tensor([cost(p) for p in pop])  # cost must accept torch.Tensor
+    fitness = torch.tensor([ga_cost(p) for p in pop])  # cost must accept torch.Tensor
 
     # Best individual
     best_idx = torch.argmin(fitness)
@@ -74,5 +66,6 @@ for gen in range(N_GEN):
 print("*******************************")
 print(f"Best candidate: {best_p}")
 print(f"Best count: {best_count}")
-P=make_symmetric_P(best_p,3)
-print(f"Best P:\n{P}")
+
+data={"pvec":best_p.tolist()}
+save_json(data, "best_candidate.json")
