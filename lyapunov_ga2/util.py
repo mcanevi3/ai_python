@@ -25,5 +25,6 @@ def load_json(file_name:str):
 def get_lqr_P(A, Q):
     P = scipy.linalg.solve_continuous_lyapunov(A.numpy().T, -Q.numpy())
     return torch.tensor(P, dtype=torch.float32)
+
 def eigs(P):
-    return torch.linalg.eigvals(P)
+    return torch.linalg.eig(P)
