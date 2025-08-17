@@ -20,13 +20,14 @@ def ga_cost(xvec):
 
     cost=torch.inf
     x=x_train
-    for _ in range(2):
+    for i in range(20):
         cost=lyap_cost(x,A,P)
         if cost == 0:
+            step=0.01*grad_Vdot(x,A,P)
+            x=x+step
+            print(f"Iteration {i}: Lyapunov cost: {cost}")
+        else:
             break
-
-        step=grad_Vdot(x,A,P)
-        x=x+0.001*step
 
     print(cost)
     if cost>1e10:

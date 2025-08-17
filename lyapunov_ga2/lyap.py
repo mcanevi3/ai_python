@@ -38,10 +38,9 @@ if __name__ == "__main__":
     for _ in range(10):
         cost=lyap_cost(x,A,P)
         if cost == 0:
-            print("Lyapunov cost is zero, stopping.")
+            step=0.01*grad_Vdot(x,A,P)
+            x=x+step
+        else:
             break
-
-        step=0.01*grad_Vdot(x,A,P)
-        x=x+step
         print(f"Lyapunov cost: {cost}")
 
