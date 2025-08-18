@@ -3,18 +3,17 @@ import torch
 def V(x,A,P):
     return x@P@x.T
 def Vdot(x,A,P):
-    x_col = x
-    xdot=A@x_col
-    return (xdot.T@P@x_col+x_col.T@P@xdot).diagonal()
+    xdot=x@A.T
+    return (xdot@P@x.T+x@P@xdot.T).diagonal()
 def grad_Vdot(x,A,P):
-    xdot=A@x
+    xdot=x@A.T
     grad_xdot=A
-    return (grad_xdot.T@P@x+P@xdot) 
+    res=grad_xdot@P@x.T+P@xdot.T
+    return res.diagonal()
 
 def lyap_cost(x,A,P):
-    x_train = x
-    xdot_train=A@x_train
-    Vdot=(xdot_train.T@P@x_train+x_train.T@P@xdot_train).diagonal()
+    xdot_train=x@A.T
+    Vdot=(xdot_train@P@x.T+x@P@xdot_train.T).diagonal()
     Vdot_res=torch.relu(Vdot)
     Vdot_count=Vdot_res.sum().item()
 
