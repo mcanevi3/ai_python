@@ -8,16 +8,22 @@ def Vdot(x,A,P):
 def grad_Vdot(x,A,P):
     xdot=x@A.T
     grad_xdot=A
-    res=grad_xdot@P@x.T+P@xdot.T
-    return res.diagonal()
+    res=x@P@grad_xdot.T+xdot@P
+    return res
+def grad_step(x,A,P):
+    step=grad_Vdot(x,A,P)
+    norm=torch.linalg.vector_norm(step, dim=1, keepdim=True)
+    norm_safe = norm.clone()
+    norm_safe[norm_safe == 0] = 1.0
+    step = step / norm_safe
+    return step
 
 def lyap_cost(x,A,P):
-    xdot_train=x@A.T
-    Vdot=(xdot_train@P@x.T+x@P@xdot_train.T).diagonal()
-    Vdot_res=torch.relu(Vdot)
-    Vdot_count=Vdot_res.sum().item()
+    vdot=Vdot(x,A,P)
+    vdot_res=torch.relu(vdot)
+    vdot_count=vdot_res.sum().item()
 
-    return Vdot_count
+    return vdot_count
 
 if __name__ == "__main__":
     # Example usage
@@ -37,7 +43,7 @@ if __name__ == "__main__":
     for _ in range(10):
         cost=lyap_cost(x,A,P)
         if cost == 0:
-            step=0.01*grad_Vdot(x,A,P)
+            step=0.0001*grad_Vdot(x,A,P)
             x=x+step
         else:
             break
