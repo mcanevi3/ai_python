@@ -28,3 +28,11 @@ def get_lqr_P(A, Q):
 
 def eigs(P):
     return torch.linalg.eig(P)
+
+def normalize(x):
+    norm = torch.linalg.norm(x)
+    if norm > 0:
+        x_normed = x / norm
+    else:
+        x_normed = x
+    return x_normed
