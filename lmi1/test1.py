@@ -1,10 +1,19 @@
 import cvxpy as cvx
 import numpy as np
 
+def relu(x):
+    return np.maximum(0, x)
+def sum(x):
+    total = 0
+    for item in x:
+        total += item
+    return total
+###########################################################
+alpha=0.35
 A=np.array([[1.0,2.0],[-3.0,-4.0]])
 B=np.array([[1.0],[2.0]])
 
-grid=np.linspace(-1,1,6)
+grid=np.linspace(-1,1,40)
 x1,x2=np.meshgrid(grid,grid)
 x_train=np.vstack([x1.flatten(),x2.flatten()]).T
 
@@ -16,7 +25,7 @@ u=x_train @ K.T
 xdot_train=x_train @ A.T + u @ B.T
 
 P = cvx.Variable((2,2), symmetric=True)
-objective = cvx.Minimize(0)
+objective = cvx.Minimize(cvx.trace(P))
 constraints=[
     P >> 1e-5*np.eye(2),
 ]
@@ -27,8 +36,8 @@ for i in range(x_train.shape[0]):
     vx=x.T @ P @ x
     vxdot=dx.T @ P @ x + x.T @ P @ dx
     
-    # constraints.append(vx + 0.001*vxdot+1e-6 <= 0)
-    constraints.append(vxdot+1e-6 <= 0)
+    val=vxdot+2*alpha*vx
+    constraints.append(val<=0)
 
 prob = cvx.Problem(objective, constraints)
 result = prob.solve(solver=cvx.SCS)
@@ -44,6 +53,18 @@ if P is not None:
     eigP,vecP = np.linalg.eig(P)
     print("Eigenvalues of P:", eigP)
 
-    lmi1=Ac.T@P+P@Ac
+    lmi1=Ac.T@P+P@Ac+2*alpha*P
     eigVal,eigVec = np.linalg.eig(lmi1)
     print("Eigenvalues LMI:", eigVal)
+
+constraints=[]
+for i in range(x_train.shape[0]):
+    x=x_train[i,:]
+    dx=xdot_train[i,:]
+    
+    vx=x.T @ P @ x
+    vxdot=dx.T @ P @ x + x.T @ P @ dx
+    
+    val=vxdot+2*alpha*vx
+    constraints.append(relu(val))
+print(sum(constraints))
