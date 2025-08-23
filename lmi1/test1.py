@@ -16,7 +16,7 @@ eigVal,eigVec = np.linalg.eig(Ac)
 print(f"eig(A+B@K):{eigVal}")
 
 P=solve_lmi(x_train,xdot_train,alpha,verbose=False)
-# print(f"P:{P}")
+print(f"P:{P}")
 if P is not None:
     eigP,vecP = np.linalg.eig(P)
     print(f"eig(P):{eigP}")
@@ -34,3 +34,4 @@ if P is not None:
 else:
     print(f"is stable? {is_stable_eig(eigVal)}")
     print("No solution!")
+

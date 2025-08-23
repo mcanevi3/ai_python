@@ -1,6 +1,7 @@
 import cvxpy as cvx
 import numpy as np
 import matplotlib.pyplot as plt 
+import control
 
 def print_pos_values(arr):
     mask = arr > 0
@@ -65,8 +66,44 @@ def plot_constraint(x):
     plt.title(r"Constraint $\dot{V}<0$")
     plt.show()
 
+def plot_step_responses(A,B,x_train):
+    np.random.seed(4)
+    n=2
+    K = np.random.rand(1, n)
+    Ac=A+B@K
+    eigVal,_=np.linalg.eig(Ac)
+    print(f"eig(Ac):{eigVal}")
+
+    P=np.array([[0.00019255,0.00040085],[0.00040085,0.00137185]])
+    Gs=control.ss(Ac,B,np.eye(n),np.zeros((n,1)))
+    for x0 in x_train:
+        plt.subplot(2,1,1)
+        x0=x0.reshape(2,1)
+        t,x=control.initial_response(Gs,X0=x0)
+        
+        plt.plot(t,x[0,:],'r')
+        plt.plot(t,x[1,:],'b')
+
+        print(f"x0:{x0}")
+
+        V=x0.T@P@x0
+        print(f"V(x0):{V}")
+
+        x1=x0
+        step=10
+        vdotvec=np.zeros((step,))
+        for i in range(step):
+            x2=Ac@x1
+            Vdot=x2.T@P@x1+x1.T@P@x2
+            x1=x2
+            vdotvec[i]=Vdot.item()
+
+        plt.subplot(2,1,2)
+        plt.plot(vdotvec)
+
+        break
+    plt.show()
 
 if __name__=="__main__":
-    test_eig1,_=np.linalg.eig(np.eye(2))
-    print(f"eig:{test_eig1}")
-    print(f"is stable? {is_stable_eig(test_eig1)}")
+    from defs import x_train,A,B
+    plot_step_responses(A,B,x_train)
