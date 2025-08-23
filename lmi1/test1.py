@@ -3,7 +3,7 @@ from util import *
 
 # K = np.array([[-32.62468001,-8.21394156]])
 # K=np.array([[0.03934841, 0.71462091]])
-np.random.seed(3)
+np.random.seed(4)
 K = np.random.rand(1, 2)
 # K=np.array([[0.15300342, 0.00486872]])
 print(f"K:{K}")
