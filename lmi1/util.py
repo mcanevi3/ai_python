@@ -103,10 +103,27 @@ def plot_step_responses(A,B,x_train):
 
         plt.subplot(2,1,2)
         plt.plot(vdotvec)
-        
+
         break
+    plt.show()
+
+def plot_lyap_with_lmi(A,B,x_train):
+    np.random.seed(4)
+    n=2
+    K = np.random.rand(1, n)
+    Ac=A+B@K
+    P=np.array([[0.00019255,0.00040085],[0.00040085,0.00137185]])
+
+    Q=Ac.T@P+P@Ac
+    dotV_vec=np.zeros((x_train.shape[0],))
+    
+    for i,x0 in enumerate(x_train):
+        x0=x0.reshape(2,1)
+        V=x0.T@P@x0
+        dotV_vec[i]=(x0.T@Q@x0).item()
+    plt.plot(relu(dotV_vec))
     plt.show()
 
 if __name__=="__main__":
     from defs import x_train,A,B
-    plot_step_responses(A,B,x_train)
+    plot_lyap_with_lmi(A,B,x_train)
