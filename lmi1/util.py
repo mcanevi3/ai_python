@@ -88,6 +88,9 @@ def plot_step_responses(A,B,x_train):
 
         V=x0.T@P@x0
         print(f"V(x0):{V}")
+        x1=x0
+        x2=Ac@x1
+        print(f"dotV(x1):{x2.T@P@x1+x1.T@P@x2}")
 
         x1=x0
         step=10
@@ -100,7 +103,7 @@ def plot_step_responses(A,B,x_train):
 
         plt.subplot(2,1,2)
         plt.plot(vdotvec)
-
+        
         break
     plt.show()
 
