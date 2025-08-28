@@ -1,16 +1,16 @@
 import numpy as np 
+import matplotlib.pyplot as plt
 from controller import *
-
 
 Fs=Controller()
 Fs.load()
 Fs.print()
 
-samples=101
-t=np.linspace(0,10,samples)
+samples=1001
+t=np.linspace(0,1,samples)
 T=t[2]-t[1]
 
-x0=10
+x0=20
 x=np.zeros((samples,1))
 x[0]=x0
 u=np.ones((samples,1))
@@ -20,6 +20,8 @@ for i in range(1, samples):
     ui = Fs(xi).detach().numpy()[0][0]  # output is tensor -> numpy scalar
     u[i-1] = ui
     x[i] = (1 +T*(2)) * x[i-1] + T * u[i-1]
-print(x[0])
-print(x[-1])
+
+plt.plot(t,x)
+plt.grid()
+plt.show()
 

@@ -1,0 +1,1 @@
+Look at lyapunov2: new cost function 0.5+0.5*tanh(100*x) 

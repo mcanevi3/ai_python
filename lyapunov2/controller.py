@@ -9,9 +9,9 @@ class Controller(nn.Module):
             nn.ReLU(),
             nn.Linear(2, 1,bias=False)
         )
-        self.net = nn.Sequential(
-            nn.Linear(1, 1,bias=False)
-        )
+        # self.net = nn.Sequential(
+        #     nn.Linear(1, 1,bias=False)
+        # )
 
     def forward(self, x):
         return self.net(x)
@@ -32,3 +32,9 @@ def V(x):  # Lyapunov function: x^2
 
 def dVdt(x, u):
     return 2 * x * (2*x + u)  # derivative of V(x) = x^2
+
+def sign_tanh(x,alpha=100):
+    return torch.tanh(alpha*x)
+
+def cost(u):
+    return 0.5+0.5*sign_tanh(u)
